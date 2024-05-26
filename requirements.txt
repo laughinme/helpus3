@@ -1,0 +1,10 @@
+aiogram==2.25.1
+lxml
+pyyaml
+openai
+asyncio
+requests
+datetime
+aiosqlite
+python-dotenv
+beautifulsoup4
