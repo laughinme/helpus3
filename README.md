@@ -1,7 +1,7 @@
 
 # Homework Helper 
 
-A telegram bot that shows homework, schedules, sending notifications and helps you get your schoolwork in order
+A telegram bot that shows homework, schedules, sending notifications and helps you get your schoolwork in order. See it works right here [@helpus3eng_bot](https://t.me/helpus3eng_bot)
 
 ## Features
 
@@ -10,6 +10,7 @@ A telegram bot that shows homework, schedules, sending notifications and helps y
 - Customizable homework and schedule display
 - Notifications system, user is notified before each lesson and after all lessons
 - Storing expired tasks in archive
+- Integrated ChatGPT to turn raw data into human language
 - Fine-tuning of the bot by the user
 
 ## Screenshots
@@ -18,9 +19,15 @@ My bot has a user-friendly interface, thanks to the fact that it's on Telegram. 
 
 ## Bot construction
 
-This bot works on the aiogram framework version 2.25.1. The code has many features that allow you to connect to databases asynchronously; manage dates, times and mailings using the datetime module. 
+This bot works on the aiogram framework version 2.25.1. The code has many features:
+- Connect to databases, using sqlite3 and aiosqlite
+- Manage dates, times and mailings using the datetime module
+- Web scrapping and parsing data with beautifulsoup and requests
+- ChatGPT API integration
+- All message texts in yaml file
 
-I think it's important to know how functions work or how bot's databases built, so here is the guide:
+I think it's important to know how functions work and how bot's databases built, so here is the guide:
+(You can explore the databases using the [online viewer](https://sqliteviewer.app/), just download raw db file and open it in web view)
 
 ### Schedule
 
@@ -55,7 +62,7 @@ Archive database has the same structure as this
 | `author` | user who added this task |
 | `precisely` | if task's date was chosen by user (not automatically) |
 
-if precisely = True, date will not be changed as schedule updates
+if precisely = True, `expiration_day` will not be changed as schedule updates
 
 ### Settings
 
@@ -86,7 +93,7 @@ I'm really proud that i made my own OOP way to interact with users, while all ot
 | `lastMessageType` | name of the last used function |
 | `lastMessageId` | id of the last sent message |
 
-Most boolean fields are needed to show alert of updates
+Most of boolean fields are needed to show alert of updates
 
 ## Running the bot
 First off you have to define environment variables, I use `secret.env` in the project folder to store them, here is the specification below:

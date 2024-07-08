@@ -58,7 +58,7 @@ storage = MemoryStorage()
 # HH or xhelpus
 TEXT = Texts()
 ADMIN = int(os.environ.get('admin_id'))
-TOKEN = os.environ.get("xhelpus")
+TOKEN = os.environ.get("HHENG")
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=storage)
 dp.setup_middleware(LoggingMiddleware())
@@ -208,18 +208,18 @@ def registration_check(func):
                 await message.answer(text = TEXT.settings['greetings'],
                                      reply_markup=Inline.inline_start_command('settings'), parse_mode='Markdown')
             else:
-                await message.reply('Я вижу, что ты хочешь добавить домашку! Давай сначала [зарегистрируемся](https://t.me/helputils_bot)',
+                await message.reply("I can see that you want to add homework! Let's [sign up](https://t.me/helputils_bot) first",
                                     parse_mode='Markdown')
                 
             if isinstance(args[0], CallbackQuery):
-                await args[0].answer('Сначала зарегистрируйся!')
+                await args[0].answer('Sign up first!')
         
         else:
             if user.status:
                 if isinstance(args[0], CallbackQuery):
-                    await callback.answer('Тебе ограничен доступ, свяжись с @laughin_me', show_alert=True)
+                    await callback.answer("You're restricted, contact @laughin_me", show_alert=True)
                 else:
-                    await message.answer('Тебе ограничен доступ, свяжись с @laughin_me')
+                    await message.answer("You're restricted, contact @laughin_me")
                 return
             
             else:
@@ -262,13 +262,13 @@ async def get_schedule(day_schedule: List[Tuple], cur: sqlite3.Cursor, view='les
     """
     Assembling text for a message with a school schedule.
     Example for pairs:\n
-    🗓 Расписание на Понедельник (12.05):
+    🗓 Monday's schedule (12.05):
 
-    1-2. Геометрия-Алгебра ➗
-    8:30-10:00 Рожнева М.С. спортзал
+    1-2. Geometry-Algebra ➗
+    8:30-10:00 Rozhneva M.S. 113 r.
 
-    3-4. География 🌍
-    10:15-11:45 Джабиева Е.Ю. 113к.
+    3-4. P.E. 🌍
+    10:15-11:45 Umarow U.B. gym
 
     Args:
         - day_schedule (list[tuple]): the day's schedule, lesson by lesson in tuple format.
@@ -298,7 +298,7 @@ async def get_schedule(day_schedule: List[Tuple], cur: sqlite3.Cursor, view='les
         while index < len(relevant_lessons):
             lesson, start, end, teacher, room, removed = relevant_lessons[index]
 
-            # Если следующий урок существует и у него такой же учитель, как и у текущего урока
+            # If the next lesson exists and it has the same teacher as the current lesson
             if index + 1 < len(relevant_lessons) and teacher == relevant_lessons[index + 1][3]:
                 next_lesson = relevant_lessons[index + 1]
 
@@ -311,7 +311,7 @@ async def get_schedule(day_schedule: List[Tuple], cur: sqlite3.Cursor, view='les
                     schedule.append(f"~{index+1}-{index+2}. {lesson if lesson == next_lesson[0] else f'{currentlesson}-{next_lesson[0]}'}~\n"
                                     f"~{start}\\~{next_lesson[2]} {teacher} {room}{'к.' if room.isnumeric() else ''}~")
 
-                index += 2  # Пропускаем следующий урок, так как мы его уже обработали
+                index += 2  # Skip the next lesson, since we've already processed it
             else:
                 if not removed:
                     schedule.append(f"*{index+1}. {lesson.capitalize()}*\n"
@@ -343,9 +343,9 @@ async def monday_period(cur: sqlite3.Cursor):
     tomorrow = (datetime.datetime.now(tz) + datetime.timedelta(1))
 
     if tomorrow >= begin:
-        return f'🗓 *Расписание на Понедельник ({tomorrow.strftime("%d.%m")}):*'
+        return f"🗓 *Monday's schedule ({tomorrow.strftime('%d.%m')}):*"
     else:
-        return f'🗓 *Расписание на Понедельник ({(datetime.datetime.now(tz) - datetime.timedelta(days=5)).strftime("%d.%m")}):*'
+        return f"🗓 *Monday's schedule ({(datetime.datetime.now(tz) - datetime.timedelta(days=5)).strftime('%d.%m')}):*"
     
 
 ############ SCHEDULE COMMAND ############
@@ -380,7 +380,7 @@ async def schedule(input: CallbackQuery | Message, user: User, **kwargs):
                                   WHERE day_name = "{day}" AND (group_name = "{user.group_name_2}" OR group_name IS NULL) AND lesson_name IS NOT NULL ORDER BY lesson_number''')
                 
                 await input.message.edit_text(
-                    escapeMd2(f'🗓 *Расписание на {f"сегодня ({day})" if not is_tomorrow else f"завтра ({day})"}:* \n'
+                    escapeMd2(f'🗓 *Schedule for {f"today ({reversed_translation[day]})" if not is_tomorrow else f"tomorrow ({reversed_translation[day]})"}:* \n'
                     + await get_schedule(await cur.fetchall(), cur, user.temp_scdView)), parse_mode='MarkdownV2',
                     reply_markup=Inline.schedule(f'today_{day}', True, user.temp_scdView, user.temp_class if user.showClass else False)
                     )
@@ -421,8 +421,8 @@ async def schedule(input: CallbackQuery | Message, user: User, **kwargs):
                         day = 'Понедельник'
                         text = await monday_period(cur)
                     else:
-                        if not is_tomorrow: text = f'🗓 *Расписание на сегодня ({day}):*'
-                        else: text = f'🗓 *Расписание на завтра ({day}):*'
+                        if not is_tomorrow: text = f"🗓 *Today's schedule ({reversed_translation[day]}):*"
+                        else: text = f"🗓 *Tomorrow's schedule ({reversed_translation[day]}):*"
 
                     await cur.execute(f'''SELECT lesson_name, start_time, end_time, teacher_name, classroom, non_original FROM "{user.temp_class}"
                                       WHERE day_name = "{day}" AND (group_name = "{user.group_name_2}" OR group_name IS NULL) AND lesson_name IS NOT NULL ORDER BY lesson_number''')
@@ -468,9 +468,10 @@ async def schedule(input: CallbackQuery | Message, user: User, **kwargs):
                 text = await monday_period(cur)
             else:
                 if not is_tomorrow:
-                    text = f'🗓 *Расписание на сегодня ({day}):*'
+                    text = f'🗓 *Schedule for today ({reversed_translation[day]}):*'
                 else:
-                    text = f'🗓 *Расписание на завтра ({day}):*'
+                    print(day)
+                    text = f'🗓 *Schedule for tomorrow ({reversed_translation[day]}):*'
 
             await cur.execute(f'''SELECT lesson_name, start_time, end_time, teacher_name, classroom, non_original FROM "{user.temp_class}"
                               WHERE day_name = "{day}" AND (group_name = "{user.group_name_2}" OR group_name IS NULL) AND lesson_name IS NOT NULL ORDER BY lesson_number''')
@@ -509,12 +510,12 @@ async def schedule(input: CallbackQuery | Message, user: User, **kwargs):
             target_date = week_dates[day_index]
     
             if is_today:
-                text = f'🗓 *Расписание на сегодня ({day}):*'
+                text = f'🗓 *Schedule for today ({reversed_translation[day]}):*'
             elif is_tomorrow:
-                text = f'🗓 *Расписание на завтра ({day}):*'
+                text = f'🗓 *Schedule for tomorrow ({reversed_translation[day]}):*'
             else:
                 if day == 'Воскресенье': day = 'Понедельник'
-                text = f'🗓 *Расписание на {day} ({target_date.strftime("%d.%m")}):*'
+                text = f'🗓 *Schedule for {reversed_translation[day]} ({target_date.strftime("%d.%m")}):*'
                 changeBtn = False
 
             # Edit the message with the new schedule
@@ -578,23 +579,23 @@ async def settings_navigation(callback: CallbackQuery):
         elif data[1] == 'notice': # Switching notifications
             if '_'.join(data) == 'settings_notice':
                 await callback.answer()
-                await callback.message.edit_text('Ты можешь настроить здесь свои уведомления.\n\nТакже можешь посмотреть примеры уведомлений.', reply_markup=await Inline.settings(callback.from_user.id, 'notice'))
+                await callback.message.edit_text('You can customize your notifications here.\n\nYou can also see examples of notifications.', reply_markup=await Inline.settings(callback.from_user.id, 'notice'))
             elif data[2] == 'dayend':
 
                 if data[3] in ['on', 'off']:
                     user.notice_dayend = data[3] # Class object gets new value and being saved then
 
                     if data[3] == 'on':
-                        await callback.answer(text='Уведомления включены ✅')
+                        await callback.answer(text='Notifications on ✅')
                     elif data[3] == 'off':
-                        await callback.answer(text='Уведомления выключены ❌')
+                        await callback.answer(text='Notifications off ❌')
 
                     await user.updateuser() # Here it saves
                     await callback.message.edit_reply_markup(await Inline.settings(callback.from_user.id, 'notice'))
                     
                 else:
-                    await callback.answer("Ожидание ответа ChatGPT...")    
-                    message = await callback.message.answer("Загружаю расписание...")
+                    await callback.answer("Waiting for ChatGPT to respond...")    
+                    message = await callback.message.answer("Loading the schedule...")
 
                     async with aiosqlite.connect('school_schedule.db') as schedule_conn:
                         async with schedule_conn.cursor() as schedule_cur:
@@ -608,7 +609,7 @@ async def settings_navigation(callback: CallbackQuery):
 
                     if homework: # Gathering tasks and writing homework review using chatgpt
 
-                        await message.edit_text("Пишу домашку с ChatGPT...")
+                        await message.edit_text("Writing homework with ChatGPT...")
 
                         system_message = TEXT.ChatGPT['settings_system_message']
                         user_message = '\n'.join([f'{index+1}. {homework_tuple[0]} ({homework_tuple[1]})' for index, homework_tuple in enumerate(homework)])
@@ -629,12 +630,12 @@ async def settings_navigation(callback: CallbackQuery):
                     'lessons_amount': len(schedule)}
 
                     completion = TEXT.ChatGPT['lessons_over'].format(**data)
-                    completion += '\n\n*Расписание на завтра:*\n' + '\n'.join(schedule)
+                    completion += '\n\n*Schedule for tomorrow:*\n' + '\n'.join(schedule)
                     if homework:
-                        completion += f'\n\n*Кратко про домашку:*\n\n{homework}'
+                        completion += f'\n\n*Briefly about hometasks:*\n\n{homework}'
                     else:
-                        completion += '\n\n*Кратко про домашку:*\n\nКажется, что заданий на завтра нет!\n\n'
-                    completion += "\n\n*(Информация выше может отличаться от настоящей)*"
+                        completion += '\n\n*Briefly about hometasks:*\n\nIt seems like there are no assignments for tomorrow!\n\n'
+                    completion += "\n\n*(The information above may differ from this)*"
 
                     await message.edit_text(completion, parse_mode='Markdown', reply_markup=Inline.dayend_mailing())
                     await callback.answer()
@@ -644,21 +645,21 @@ async def settings_navigation(callback: CallbackQuery):
                     user.notice_daystart = data[3]
 
                     if data[3] == 'on':
-                        await callback.answer(text='Уведомления включены ✅')
+                        await callback.answer(text='Notifications on ✅')
                     elif data[3] == 'off':
-                        await callback.answer(text='Уведомления выключены ❌')
+                        await callback.answer(text='Notifications off ❌')
 
                     await user.updateuser()
                     await callback.message.edit_reply_markup(await Inline.settings(callback.from_user.id, 'notice'))
 
                 else:
-                    await callback.message.answer('Пример уведомления перед *предстоящим* уроком:\n\n_В 10:15_ - *География* (Митина Н.Б.) в *126* кабинете, до _11:00_', parse_mode='Markdown', reply_markup=Inline.deleteMsg())
+                    await callback.message.answer('Example of notification before the *upcoming* lesson:\n\n_At 10:15_ - *Geography* (Mitina N.B.) in the *126* classroom, until _11:00_.', parse_mode='Markdown', reply_markup=Inline.deleteMsg())
                     await callback.answer()
 
         elif data[1] == 'schedule':
 
             if len(data) == 2:
-                await callback.message.edit_text('Здесь ты можешь настроить отображение школьного расписания, и его кнопки.', reply_markup=await Inline.settings(callback.from_user.id, 'schedule'))
+                await callback.message.edit_text('Here you can customize the display of the school schedule, and its buttons.', reply_markup=await Inline.settings(callback.from_user.id, 'schedule'))
 
             else:
 
@@ -671,7 +672,7 @@ async def settings_navigation(callback: CallbackQuery):
                     await user.updateuser()
 
                     await callback.message.edit_reply_markup(await Inline.settings(callback.from_user.id, 'schedule'))
-                    await callback.answer(text='Изменено ✅')
+                    await callback.answer(text='Changed ✅')
 
                 elif data[2] == 'class':
 
@@ -681,23 +682,23 @@ async def settings_navigation(callback: CallbackQuery):
                     await user.updateuser()
 
                     await callback.message.edit_reply_markup(await Inline.settings(callback.from_user.id, 'schedule' if data[-1] != 'minor' else 'default'))
-                    await callback.answer(text='Изменено ✅')
+                    await callback.answer(text='Changed ✅')
 
 
 # Constructor of user's data
 async def getAdmin(user_id):
     user = await User.loaduser(user_id)
     
-    text = f'''*Информация о пользователе:*\n
-- Имя: *{user.name}*
-- Класс: *{user.user_class}*
-- Группа: *{user.group_name_2}*
-- Уведомления перед уроком: *{user.notice_daystart}*
-- Уведомления после уроков: *{user.notice_dayend}*
-- Расписание: *{user.schedule_view}*
+    text = f'''*User Information:*\n
+- Name: *{user.name}*
+- Grade: *{user.user_class}*
+- Group: *{user.group_name_2}*
+- Notices before class: *{user.notice_daystart}*
+- Notices after school: *{user.notice_dayend}*
+- Schedule: *{user.schedule_view}*
 - Interactions: *{user.interactions}*
-- Статус: *{'Бан' if user.status else 'Доступ'}*\n
-  Выбор действия:'''
+- Status: *{'Ban' if user.status else 'Access'}*\n
+  Choose action:'''
 
     return text
         
@@ -710,7 +711,7 @@ async def admin(data: Message | CallbackQuery, state: FSMContext, **kwargs):
     if data.from_user.id == ADMIN:
         
         if type(data) == Message:
-            await data.answer('Выбери инструмент из меню кнопок ниже:', reply_markup=Inline.admin())
+            await data.answer('Select a tool from the button menu below:', reply_markup=Inline.admin())
             try: await data.delete()
             except: pass
 
@@ -719,7 +720,7 @@ async def admin(data: Message | CallbackQuery, state: FSMContext, **kwargs):
             data = callback.data.split('_')[1:]
             
             if data[0] == 'users':
-                await callback.message.edit_text('Выбор пользователя:', reply_markup=Inline.admin('users'))
+                await callback.message.edit_text('Choose a user', reply_markup=Inline.admin('users'))
 
             elif data[0] == 'user':
                 user_id = data[1]
@@ -731,7 +732,7 @@ async def admin(data: Message | CallbackQuery, state: FSMContext, **kwargs):
                     await callback.message.edit_text(await getAdmin(user_id), reply_markup=Inline.admin(f'sUser', user_id), parse_mode='Markdown')
 
                 elif data[2] == 'status':
-                    await callback.answer('Изменено!')
+                    await callback.answer('Edited!')
 
                     user.status = 0 if user.status else 1
                     await user.updateuser()
@@ -759,9 +760,9 @@ async def admin(data: Message | CallbackQuery, state: FSMContext, **kwargs):
                         if mediafile_id:
                             mediafile_id = mediafile_id.split(' ')
                             embed_counter+=1
-                            photo = [types.InputMediaPhoto(media = file, caption = f'Вложение №{embed_counter}') for file in mediafile_id]
+                            photo = [types.InputMediaPhoto(media = file, caption = f'Attachment №{embed_counter}') for file in mediafile_id]
                             media_group.extend(photo)
-                            text = f"{str(subject).capitalize()}:\n{str(content if content else 'Задание на фото!').strip().capitalize()}\n\n📎 Фото №{embed_counter}"
+                            text = f"{str(subject).capitalize()}:\n{str(content if content else 'Task is on photo!').strip().capitalize()}\n\n📎 Photo №{embed_counter}"
                         else:
                             text = str(subject).capitalize()+':\n'+str(content).strip().capitalize()
                             tasks_text.append(text)
@@ -843,7 +844,7 @@ async def cabinets(data: Message | CallbackQuery, **kwargs):
             if data[0] == 'day':
                 
                 for class_name in classes:
-                    cur.execute(f"SELECT DISTINCT classroom FROM '{class_name}' WHERE day_name = ?", (day_translation[now.strftime('%A')],))
+                    cur.execute(f"SELECT DISTINCT classroom FROM '{class_name}' WHERE day_name = ?", (now.strftime('%A'),))
                     used_rooms.extend([_ for (_,) in cur.fetchall()])
             
                 used_rooms = set(used_rooms)
@@ -867,7 +868,7 @@ async def cabinets(data: Message | CallbackQuery, **kwargs):
                     return True
 
                 for class_name in classes:
-                    cur.execute(f"SELECT DISTINCT classroom, start_time, end_time FROM '{class_name}' WHERE day_name = ?", (day_translation[now.strftime('%A')],))
+                    cur.execute(f"SELECT DISTINCT classroom, start_time, end_time FROM '{class_name}' WHERE day_name = ?", (now.strftime('%A'),))
                     data = cur.fetchall()
 
                     used_rooms +=  [item[0] for item in filter(checker, data) if item[0]]
@@ -900,7 +901,7 @@ async def navigation_clear(callback: CallbackQuery, state: FSMContext, **kwargs)
         if not user.firstSchedule:
             user.firstSchedule = 1
             if user.user_class.startswith(('9', '10', '11')):
-                await callback.answer('Теперь отображение расписания можно изменить в настройках', show_alert=True)
+                await callback.answer('The schedule display can now be changed in the settings', show_alert=True)
         
         await user.updateuser()
 
@@ -1006,7 +1007,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
         # storage = await state.get_data()
         storage['task_id'] = []
         storage['task'] = task
-        await callback.message.edit_text(text='Добавить задание в архив?', reply_markup=Inline.hw_inline(archive=True))
+        await callback.message.edit_text(text='Add an assignment to the archive?', reply_markup=Inline.hw_inline(archive=True))
         messages = storage['media']
         storage['media'] = None
         await state.update_data(storage)
@@ -1021,7 +1022,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
     elif data[0]=='archivate':
         if data[1] == 'back':
             await callback.message.edit_text(text=TEXT.get_text['hw_hub'], reply_markup=Inline.hw_inline(False, user.user_class, user.group_name_2, mode=user.hw_view))
-            await callback.answer('Отмена')
+            await callback.answer('Canceled')
         
         else:
             storage = await state.get_data()
@@ -1040,21 +1041,22 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
                     await conn.commit()
 
                 await callback.message.edit_text(text=TEXT.get_text['hw_hub'], reply_markup=Inline.hw_inline(False, user.user_class, user.group_name_2, mode=user.hw_view))
-                await callback.answer('Архивировано')
+                await callback.answer('Archivated')
             elif data[1] == 'cancel':
 
                 await callback.message.edit_text(text=TEXT.get_text['hw_hub'], reply_markup=Inline.hw_inline(False, user.user_class, user.group_name_2, mode=user.hw_view))
-                await callback.answer('Удалено!')  
+                await callback.answer('Deleted!')  
         return
     
 
     elif data[0] == 'edit':
         id = data[-1]
-        await callback.answer('Если ты нажал на редактирование случайно, или просто передумал что-то менять - обязательно нажми "Сохранить", чтобы это задание осталось, иначе оно удалится', show_alert=True)
+        await callback.answer('If you hit edit by accident, or just changed your mind about something - be sure to hit "Save" to keep that assignment, otherwise it will be deleted', show_alert=True)
 
         with sqlite3.connect('homework.db') as conn:
             cur = conn.cursor()
             cur.execute(f'SELECT content, subject, group_name, mediafile_id, expiration_day, precisely FROM "{user.user_class}" WHERE id = {id}')
+            print(user.user_class, id)
             # content, subject, group_name, mediafile_id, expiration_day = cur.fetchone()
             task = cur.fetchall()[0]
 
@@ -1065,37 +1067,36 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
         mediafile_id = mediafile_id.split(' ') if mediafile_id else []
         mediaToDel = storage['media']
 
-        data = {}
+        hwdata = {}
     
-        data['content'] = content
-        data['subject'] = subject
-        data['mediafile_id'] = mediafile_id
-        data['expiration_day'] = expiration_day
-        data['precisely'] = precisely
-        data['media'] = []
+        hwdata['content'] = content
+        hwdata['subject'] = subject
+        hwdata['mediafile_id'] = mediafile_id
+        hwdata['expiration_day'] = expiration_day
+        hwdata['precisely'] = precisely
+        hwdata['media'] = []
 
-        data['user_class'] = user.user_class
-        data['user_group_2'] = user.group_name_2
-        data['user_group_3'] = user.group_name_3
-        data['subject_group'] = group_name
+        hwdata['user_class'] = user.user_class
+        hwdata['user_group_2'] = user.group_name_2
+        hwdata['user_group_3'] = user.group_name_3
+        hwdata['subject_group'] = group_name
         
 
-
         if len(mediafile_id) == 1:
-            data['message'] = await callback.message.answer_photo(photo=mediafile_id[0], caption=get_text(data), reply_markup=Inline.upload_navigation(), parse_mode='Markdown')
+            hwdata['message'] = await callback.message.answer_photo(photo=mediafile_id[0], caption=get_text(hwdata), reply_markup=Inline.upload_navigation(), parse_mode='Markdown')
 
         elif len(mediafile_id) > 1:
             mediagroup = types.MediaGroup()
             [mediagroup.attach_photo(types.InputMediaPhoto(media=file)) for file in mediafile_id]
-            data['media'] = await callback.message.answer_media_group(mediagroup)
+            hwdata['media'] = await callback.message.answer_media_group(mediagroup)
 
-            data['message'] = await callback.message.answer(text=get_text(data), reply_markup=Inline.upload_navigation(), parse_mode='Markdown')
+            hwdata['message'] = await callback.message.answer(text=get_text(hwdata), reply_markup=Inline.upload_navigation(), parse_mode='Markdown')
 
         else:
-            data['message'] = await callback.message.answer(text=get_text(data), reply_markup=Inline.upload_navigation(), parse_mode='Markdown')
+            hwdata['message'] = await callback.message.answer(text=get_text(hwdata), reply_markup=Inline.upload_navigation(), parse_mode='Markdown')
 
 
-        await state.update_data(data)
+        await state.update_data(hwdata)
         await HWUpdate.waiting_for_content.set()
         
         await callback.message.delete()
@@ -1185,7 +1186,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
         await state.update_data(storage)
 
         print('date', data[-1], len(data))
-        await callback.message.answer(text=f'Все задания по предмету {str(data[0]).strip()}:\n\n'+'\n\n'.join(tasks_text), reply_markup=Inline.hw_inline(back=True, admin=admin, owner=owner, taskIds=storage['task_id'], date=data[-1] if user.hw_view=='dates' else None))
+        await callback.message.answer(text=f'All assignments for the subject of {str(data[0]).strip()}:\n\n'+'\n\n'.join(tasks_text), reply_markup=Inline.hw_inline(back=True, admin=admin, owner=owner, taskIds=storage['task_id'], date=data[-1] if user.hw_view=='dates' else None))
 
 
     elif data[0] == 'date':
@@ -1202,7 +1203,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
     elif data[0] == 'archive':
         if user.fstArchive: await callback.answer()
         else:
-            await callback.answer('У архива стало больше функций!\n\n1. Теперь можно переключать режим просмотра, нажимая на кнопку, как в домашке\n\n2. При просмотре архива по предметам теперь можно выбрать определенную дату', show_alert=True)
+            await callback.answer('The archive has more features now!\n\n1. now you can switch the viewing mode by pressing the button, just like in homework\n\n2. You can now select a specific date when viewing the subject archive', show_alert=True)
             user.fstArchive = 1
             await user.updateuser()
 
@@ -1225,7 +1226,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
                 await callback.message.edit_text(text=TEXT.get_text['archive'], reply_markup=Inline.hw_inline(user_class=user.user_class, user_group_2=user.group_name_2, mode=f'archive_{user.hw_view}', changer=True))
             
             else:
-                await callback.message.edit_text(text=f'Ниже ты можешь увидеть кнопки с датами истечения срока сдачи заданий по предмету, выбирай подходящий день и нажимай на кнопку!', reply_markup=Inline.hw_inline(user_class=user.user_class, user_group_2=user.group_name_2, back=True, mode=f'archive_subject_{data[2]}'))
+                await callback.message.edit_text(text=f'Below you can see buttons with subject assignment due dates, choose the day that you want and click on the button!', reply_markup=Inline.hw_inline(user_class=user.user_class, user_group_2=user.group_name_2, back=True, mode=f'archive_subject_{data[2]}'))
             
             storage = await state.get_data()
             media = storage['media']
@@ -1245,7 +1246,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
 
                 tasks = await cur.fetchall()
 
-            tasks_text, storage = await getHWText(tasks, callback, storage, firstText=f'*Архив домашних заданий на {data[2]}:*', subjectNec=True)
+            tasks_text, storage = await getHWText(tasks, callback, storage, firstText=f'*The homework archive for {data[2]}:*', subjectNec=True)
             await state.update_data(storage)
 
 
@@ -1269,14 +1270,14 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
             tasks = [tasks[i][:-1] for i, dtm in enumerate(expirations) if (not (dtm == 12 and today.month == 1) and dtm >= today - datetime.timedelta(30))]
                     
             if len(tasks) > 1:
-                await callback.message.edit_text(text=f'Ниже ты можешь увидеть кнопки с датами истечения срока сдачи заданий по предмету *{subject}*, выбирай подходящий день и нажимай на кнопку!', parse_mode='Markdown',
+                await callback.message.edit_text(text=f'Below you can see buttons with the deadline dates for *{subject}* assignments, choose the day that you want and click on the button!', parse_mode='Markdown',
                         reply_markup=Inline.hw_inline(user_class=user.user_class, user_group_2=user.group_name_2, back=True, mode=f'archive_subject_{data[2]}'))
                 
             else:
                 try: await callback.message.delete()
                 except: pass
                 
-                tasks_text, storage = await getHWText(tasks, callback, storage, firstText=f'*Архив домашних заданий по предмету {subject}:*')
+                tasks_text, storage = await getHWText(tasks, callback, storage, firstText=f'*Homework Archive for the subject {subject}:*')
 
                 await state.update_data(storage)
 
@@ -1300,7 +1301,7 @@ async def homework_navigation(callback: CallbackQuery, state: FSMContext, user: 
                 await cur.execute(f'SELECT id, content, subject, mediafile_id, author FROM "{user.user_class}" WHERE subject = "{subject}" AND expiration_day = "{data[3]}" AND (group_name IS NULL OR group_name = "{user.group_name_2}")')
                 tasks = await cur.fetchall()
                 
-            tasks_text, storage = await getHWText(tasks, callback, storage, firstText=f'*Архив {subject} на {data[3]}:*')
+            tasks_text, storage = await getHWText(tasks, callback, storage, firstText=f'*Archive {subject} for {data[3]}:*')
 
             await state.update_data(storage)
             
@@ -1330,19 +1331,19 @@ async def getHWText(tasks: list, callback: CallbackQuery, storage: dict, firstTe
         if mediafile_id:
             mediafile_id = mediafile_id.split(' ')
             embed_counter+=1
-            photo = [types.InputMediaPhoto(media = file, caption = f'Вложение №{embed_counter}') for file in mediafile_id]
+            photo = [types.InputMediaPhoto(media = file, caption = f'Attachment №{embed_counter}') for file in mediafile_id]
             media_group.extend(photo)
-            if subjectNec: text = f"{subject}:\n{content if content else 'Задание на фото!'}\n\n📎 Фото №{embed_counter}"
-            else: text = f"{content if content else 'Задание на фото!'}\n\n📎 Фото №{embed_counter}"
+            if subjectNec: text = f"{subject}:\n{content if content else 'The assignment is in the photo!'}\n\n📎 Photo №{embed_counter}"
+            else: text = f"{content if content else 'The assignment is in the photo!'}\n\n📎 Photo №{embed_counter}"
         else:
             if subjectNec: text = subject+':\n'+content
             else: text = content
                 
 
         if author: 
-            text += '\n\nДобавил: '+author
+            text += '\n\nAdded: '+author
             if owner and owner == author:
-                text += ' (ты можешь удалить своё задание по кнопке ниже)'
+                text += ' (you can delete your assignment by clicking the button below)'
 
         tasks_text.append(text)
 
@@ -1370,7 +1371,7 @@ async def getHWText(tasks: list, callback: CallbackQuery, storage: dict, firstTe
 @registration_check
 async def update(message: Message | CallbackQuery, state: FSMContext, user: User, **kwargs):
 
-    currentDay = day_translation[datetime.datetime.now(tz).strftime('%A')]
+    currentDay = datetime.datetime.now(tz).strftime('%A')
     
     data = {}
     data['subject'] = None
@@ -1420,11 +1421,6 @@ async def update(message: Message | CallbackQuery, state: FSMContext, user: User
 
     if isinstance(message, CallbackQuery):
         callback = message
-        if not user.fstUPD:
-            text = 'Добавлять домашку стало проще!\n\n1. Пиши текст задания сразу под этим сообщением, или отправь фотку с заданием в подписи\n\n2. Я теперь умею автоматически подставлять предмет и дату в новую домашку!'
-            await callback.answer(text, show_alert=True)
-            user.fstUPD = 1
-            await user.updateuser()
 
         try: await callback.message.delete()
         except: pass
@@ -1446,19 +1442,26 @@ async def update(message: Message | CallbackQuery, state: FSMContext, user: User
     # print('\n'.join([f'{key} {value}'for key, value in data.items()]))
 
 
-# Text getting function for update()
+# Text builder function
 def get_text(data: dict = None, mode: str = 'upd'):
     if mode == 'upd':
         if data.get('expiration_day', None):
-            expiration = f'{data["expiration_day"].split("_")[0]}: {weekday_to_date(data["expiration_day"], year=False)}' if '-' not in data['expiration_day'] else data['expiration_day']
+            expiration = f'{reversed_translation[data["expiration_day"].split("_")[0]]}: {weekday_to_date(data["expiration_day"], year=False)}' if '-' not in data['expiration_day'] else data['expiration_day']
         else:
             expiration = None
+        
+        subject = data.get('subject', None)
+        if subject:
+            with sqlite3.connect('school_schedule.db') as conn:
+                cur = conn.cursor()
+                cur.execute('SELECT emojiName FROM lessons WHERE lesson_name = ?', (subject,))
+                subject = cur.fetchone()[0]
 
         form = {
-        'content': f"`{data['content']}`" if data.get('content', None) else 'Пока пусто, можешь написать задание сообщением',
-        'subject': data['subject'] if data.get('subject', None) else 'Пока пусто, выбери из предложенных в меню',
-        'photo': 'файл(ы) сверху' if data.get('mediafile_id', []) else 'Пока пусто, здесь можно добавлять фото, если есть.',
-        'due_date': expiration if expiration else 'Пока не выбрано, день до которого надо сделать.'}
+        'content': f"`{data['content']}`" if data.get('content', None) else "Now it's empty, you can write the assignment with a message.",
+        'subject': subject if subject else "Now it's empty, choose one from menu",
+        'photo': 'files above' if data.get('mediafile_id', []) else "Now it's empty, you can upload photo if you have one",
+        'due_date': expiration if expiration else "Hasn't been chosen yet, the day before which task must be done."}
 
         text = TEXT.get_text['upd'].format(**form)
 
@@ -1528,7 +1531,7 @@ async def subject(callback: CallbackQuery, state: FSMContext, **kwargs):
     user_group_2 = data['user_group_2']
     subject = data['subject']
 
-    await normal_send(callback.message, mediafiles, text=f'*Выбери предмет*, нажав на одну из кнопок ниже:', reply_markup=Inline.choose_subject(user_class, user_group_2, subject), parse_mode='Markdown')
+    await normal_send(callback.message, mediafiles, text=f'*Select a subject* by clicking on one of the buttons below:', reply_markup=Inline.choose_subject(user_class, user_group_2, subject), parse_mode='Markdown')
 
     await HWUpdate.waiting_for_subject.set()
 
@@ -1557,7 +1560,7 @@ async def proccess_subject(callback: CallbackQuery, state: FSMContext):
             cur.execute(f'SELECT DISTINCT day_name FROM "{data["user_class"]}" WHERE lesson_name = "{data["subject"]}" AND non_original IS NULL AND (group_name IS NULL OR group_name = ?)', (data["user_group_2"],))
             days = sorted([_ for (_,) in cur.fetchall()], key=lambda x: order.index(x))
 
-            current_day_index = order.index(day_translation[datetime.datetime.now(tz).strftime('%A')])
+            current_day_index = order.index(datetime.datetime.now(tz).strftime('%A'))
             dates = [day for day in days if not order.index(day) <= current_day_index] + [f'{day}_future' for day in days]
             # print(dates)
             data['expiration_day'] = dates[0]
@@ -1665,7 +1668,7 @@ async def more_media(callback: CallbackQuery, state: FSMContext):
         return
     mediafiles = data.get('mediafile_id', [])
 
-    await normal_send(callback.message, mediafiles, text='*Файлы выше* - это существующие вложения.\nВидимо ты хочешь добавить еще, отправляй мне:', reply_markup=Inline.back_btn(), parse_mode='Markdown')
+    await normal_send(callback.message, mediafiles, text='*The files above* are existing attachments. You probably want to add more, send them to me:', reply_markup=Inline.back_btn(), parse_mode='Markdown')
 
     await HWUpdate.wait_for_more_media.set()
 
@@ -1710,7 +1713,14 @@ def weekday_to_date(weekday_name, year=True):
             'Четверг': 3,
             'Пятница': 4,
             'Суббота': 5,
-            'Воскресенье': 6
+            'Воскресенье': 6,
+            'Monday': 0,
+            'Tuesday': 1,
+            'Wednesday': 2,
+            'Thursday': 3,
+            'Friday': 4,
+            'Saturday': 5,
+            'Sunday': 6,
         }
 
         # Current date and its weekday index
@@ -1739,9 +1749,9 @@ def weekday_to_date(weekday_name, year=True):
 def get_weekday(date_str, mode='default'):
     date = datetime.datetime.strptime(date_str, '%d-%m-%Y')
     if mode == 'default':
-        weekdays = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     elif mode == 'hw_date':
-        weekdays = ["Понедельник", "Вторник", "Среду", "Четверг", "Пятницу", "Субботу", "Воскресенье"]
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     return weekdays[date.weekday()]
 
 
@@ -1782,7 +1792,7 @@ async def confirmation(callback: CallbackQuery, state: FSMContext):
                         if task: # If this date is already taken, ask user if he sure wants to add a task 
                             content, mediafiles, author = task
 
-                            text = f'На {expiration_day} уже есть добавленное задание по предмету {subject}:\n\n{content if content else "Задание на фото!"}\nДобавил: {author}\n\n*Добавить* - все равно добавить дз на эту же дату'
+                            text = f'There is already an added {subject} assignment on {expiration_day}:\n\n{content if content else "Task is on photo!"}\Added: {author}\n\n*Add* - add your task on this date anyway'
 
                             if mediafiles: 
                                 mediafiles = mediafiles.split(' ')
@@ -1806,8 +1816,8 @@ async def confirmation(callback: CallbackQuery, state: FSMContext):
                                         (content, subject, subject_group, mediafile_id, expiration_day, user_name, precisely))
                             await conn.commit()
 
-                            await callback.answer('Задание добавлено!')
-                            await callback.message.answer('Домашнее задание добавлено!', reply_markup=Inline.main_more_from_update_successfull(clear=True))
+                            await callback.answer('Task uploaded!')
+                            await callback.message.answer('Homework added!', reply_markup=Inline.main_more_from_update_successfull(clear=True))
 
                             media = data['media'] if data['media'] else None
                             # Reset the state
@@ -1822,11 +1832,11 @@ async def confirmation(callback: CallbackQuery, state: FSMContext):
                                     await asyncio.sleep(0.5)
                             
                 else:
-                    await callback.answer('Сначала отправь фото или текст задания!', show_alert=True)
+                    await callback.answer('Send a photo or text of the task first!', show_alert=True)
             else:
-                await callback.answer('Сначала укажи дату!', show_alert=True)
+                await callback.answer('Give me the date first!', show_alert=True)
         else:
-            await callback.answer('Сначала укажи предмет!', show_alert=True)
+            await callback.answer('State the subject first!', show_alert=True)
     
     else: # Process user's decision of adding task at taken date
         cData = callback.data.split('_')[1]
@@ -1847,8 +1857,8 @@ async def confirmation(callback: CallbackQuery, state: FSMContext):
                             (content, subject, subject_group, mediafile_id, expiration_day, user_name, precisely))
                 await conn.commit()
                 
-            await callback.answer('Задание добавлено!')
-            await callback.message.answer('Домашнее задание добавлено!', reply_markup=Inline.main_more_from_update_successfull(clear=True))
+            await callback.answer('Task uploaded!')
+            await callback.message.answer('Homework added!', reply_markup=Inline.main_more_from_update_successfull(clear=True))
             media = data['media'] if data['media'] else None
             try:
                 await data['message'].delete()
@@ -2004,7 +2014,7 @@ async def check_expired_tasks():
                                 await acur.execute(f'INSERT INTO "{class_name}" (content, subject, group_name, mediafile_id, expiration_day, author) VALUES (?, ?, ?, ?, ?, ?)', (task[1], task[2], task[3], task[4], task[5], task[7],))
                             await aconn.commit()
                     except Exception as e:
-                        await bot.send_message(ADMIN, 'Ошибка в базе данных: ' + str(e))
+                        await bot.send_message(ADMIN, 'Error in database: ' + str(e))
                         print(e)
                     
                     await conn.commit()
@@ -2083,7 +2093,7 @@ async def check_changes(forceUpd=False, path=''):
                                 if schedule_previous:
                                     dictcreator('replace')
 
-                                    # Перезаписываем предмет
+                                    # Rewrite subject
                                     cur.execute(f"UPDATE '{class_name}' SET lesson_name = ?, teacher_name = ?, classroom = ? WHERE lesson_number = ? AND day_name = ? AND non_original IS NULL",
                                                 (content['SUBJECTS'][subject_details['s'][0]], content['TEACHERS'][subject_details['t'][0]], content['ROOMS'][subject_details['r'][0]], int(subject_num), day,))
 
@@ -2092,7 +2102,7 @@ async def check_changes(forceUpd=False, path=''):
 
                                     dictcreator('add')
 
-                                    # Добавляем предмет на тот индекс, который указан в subject_num
+                                    # Add the subject to the index specified in subject_num
                                     if class_name.startswith(('9', '10', '11')):
                                         cur.execute(f'SELECT pair_time FROM pair_times WHERE lessons_inclued LIKE ?', (f'%{int(subject_num)}%',))
                                         pair_time = cur.fetchone()[0].split('-')
@@ -2156,7 +2166,7 @@ async def check_changes(forceUpd=False, path=''):
 
                                         dictcreator('replace', True)
 
-                                        # Перезаписываем предмет
+                                        # Rewriting the subject
                                         cur.execute(f"UPDATE '{class_name}' SET lesson_name = ?, teacher_name = ?, classroom = ?, group_name = ? WHERE lesson_number = ? AND day_name = ? AND group_name = ? AND non_original IS NULL",
                                                     (content['SUBJECTS'][subject_details['s'][index]], content['TEACHERS'][subject_details['t'][index]], content['ROOMS'][subject_details['r'][index]], group_name, int(subject_num), day, schedule_previous[3]))
 
@@ -2200,7 +2210,7 @@ async def check_changes(forceUpd=False, path=''):
                     content = json.loads(str(file.read().split("=", 1)[1].strip().rstrip(";")))
 
         else: # Otherwise, parse it from the website
-            # Получаем название JSON строки для парсинга (его зачем-то постоянно меняют)
+            # Getting the name of the JSON string to be parsed (they keep changing it for some reason)
             url = 'https://lyceum.nstu.ru/rasp/m.schedule.html'
 
             try:
@@ -2210,7 +2220,7 @@ async def check_changes(forceUpd=False, path=''):
 
             soup = BeautifulSoup(html_text, 'lxml')
 
-            # Формируем ссылку на JSON файл
+            # Forming a link to JSON file
             ad = soup.find_all('script', type='text/javascript')
             srcs = [_.get('src') for _ in ad]
             httpsAddress = f'https://lyceum.nstu.ru/rasp/{[src for src in srcs if str(src).startswith("nika_data")][0]}'
@@ -2229,7 +2239,7 @@ async def check_changes(forceUpd=False, path=''):
                 content = json.loads(response.text.split("=", 1)[1].strip().rstrip(";"))
             else:
                 try:
-                    await bot.send_message(chat_id=ADMIN, text=f'*Произошла ошибка* на школьном сервере.\n\n*Расписание может быть некорректным!*\n{response.status_code}\n{response.text}', parse_mode='Markdown')
+                    await bot.send_message(chat_id=ADMIN, text=f'*There was an error* on the school server.\n\n*Schedule may be incorrect!*\n{response.status_code}\n{response.text}', parse_mode='Markdown')
                 except: pass
                 return
         
@@ -2266,7 +2276,7 @@ async def check_changes(forceUpd=False, path=''):
                     times = sorted([time for (time,) in await cur.fetchall()], key=lambda x: tz.localize(datetime.datetime.strptime(x, '%H:%M')))
                     if times:
                         end_time = times[-1]
-                        print(times, end_time, sep='\n')
+                        # print(times, end_time, sep='\n')
                         if datetime.datetime.strptime(end_time, '%H:%M').time() < datetime.datetime.now(tz).time():
                             day = day_translation[(datetime.datetime.now(tz) + datetime.timedelta(days=1)).strftime("%A")]
                             is_tomorrow = True
@@ -2276,9 +2286,9 @@ async def check_changes(forceUpd=False, path=''):
                         text = await monday_period(cur)
                     else:
                         if not is_tomorrow:
-                            text = f'🗓 *Расписание на сегодня ({day}):*'
+                            text = f'🗓 *Schedule for today ({reversed_translation[day]}):*'
                         else:
-                            text = f'🗓 *Расписание на завтра ({day}):*'
+                            text = f'🗓 *Schedule for tomorrow ({reversed_translation[day]}):*'
 
                     for group in classesDict[class_name]:
                         
@@ -2386,7 +2396,7 @@ async def dayend_notification(end_time, current_time, class_name, day, tomorrow_
                 homework = ungrouped + grouped_homework
 
                 if homework:
-                    system_message = "Ты помощник, который создает краткое ревью по предоставленным домашним заданиям ученикам в дружеской форме. Cделай это кратко и ясно. Например: 'Есть задания по русскому и математике. Также по литературе. Заданий много. поэтому приступай скорее!' ИЛИ 'Задали немного: прочитать пару страниц по лит-ре и одно задание по физике'. В конце всегда добавляй эту фразу: 'Нажимай на кнопку Подробнее'"
+                    system_message = "You're the helper who creates a brief review of the homework given to students in a friendly way. Make it short and clear. For example: 'There are assignments in Russian and math. Also literature. There are a lot of assignments. so get started soon!' OR 'There is not much to do: read a couple of pages in literature and one assignment in physics'. Always add this phrase at the end: 'Click on the More button'"
 
                     user_message = '\n'.join([f'{index+1}. {homework_tuple[0]} ({homework_tuple[1]})' for index, homework_tuple in enumerate(homework)])
                     
@@ -2413,35 +2423,23 @@ async def dayend_notification(end_time, current_time, class_name, day, tomorrow_
                     end_time = relevant_lessons[len(schedule)-1][2]
                     lessons_amount = len(schedule)
 
-                    # Generate message using API
-    #                 completion = client.chat.completions.create(
-    #                     model="gpt-3.5-turbo",
-    #                     messages=[
-    #                         {"role": "system", "content": "You are an intellectual assistant who helps to paraphrase the text in a moderately friendly manner for schoolchildren in Russian. You have to tell about the number of lessons, the time of the beginning and the end of school, and lead to the next message with the schedule for tomorrow. Don't be too detailed."},
-    #                         {"role": "user", "content": f'''Привет! 😊 На сегодня все уроки закончились, с чем тебя и поздравляю!
-# - {"Завтрa" if day != "Воскресенье" else "В понедельник"} у тебя {lessons_amount} уроков,
-# - Учеба начинается с {start_time} и до {end_time}. 
-# Давай посмотрим, что нас ожидает:'''}
-    #                     ]
-    #                 ).choices[0].message.content
-
-                    completion = f'''Привет! 😊 На сегодня все уроки закончились, с чем тебя и поздравляю!
-- {"Завтрa" if day != "Воскресенье" else "В понедельник"}'''
+                    completion = f'''Hi 😊 All lessons are over for today, congratulations to you!
+- {"Tomorrow" if day != "Воскресенье" else "At monday"}'''
                     if class_name.startswith(('9', '10', '11')):
-                        completion += f''' у тебя {lessons_amount} уроков{(" / "+str(lessons_amount//2)+" пары") if lessons_amount % 2 == 0 else ""},
-- Учеба начинается с {start_time} и до {end_time}. 
-Давай посмотрим, что нас ожидает:'''
+                        completion += f''' you have {lessons_amount} classes{(" / "+str(lessons_amount//2)+" pairs") if lessons_amount % 2 == 0 else ""},
+- Lessons starts from {start_time} until {end_time}. 
+Let's see what's ahead of us:'''
                         
                     else:
-                        completion += f''' у тебя {lessons_amount} уроков,
-- Учеба начинается с {start_time} и до {end_time}. 
-Давай посмотрим, что нас ожидает:'''
+                        completion += f''' you have {lessons_amount} classes,
+- Lessons starts from {start_time} until {end_time}.
+Let's see what's ahead of us:'''
 
-                    completion += f'\n\n*Расписание на {"завтра" if day != "Воскресенье" else "Понедельник"}:*\n' + '\n'.join(schedule)
+                    completion += f'\n\n*Schedule for {"tomorrow" if day != "Воскресенье" else "Monday"}:*\n' + '\n'.join(schedule)
                     if homework:
-                        completion += f'\n\n*Кратко про домашку:*\n\n{homework}'
+                        completion += f'\n\n*Briefly about homework:*\n\n{homework}'
                     else:
-                        completion += f'\n\n*Кратко про домашку:*\n\nКажется, что заданий на {"завтра" if day != "Воскресенье" else "Понедельник"} нет!\n\n'
+                        completion += f'\n\n*Briefly about homework:*\n\nIt seems there are no assignments for {"tomorrow" if day != "Воскресенье" else "Monday"}!\n\n'
                 else:
                     completion = 'no schedule'
                 
@@ -2479,9 +2477,7 @@ async def prelesson_notification(current_time, subtracted_times, class_name, cur
         async with aiosqlite.connect('school_schedule.db') as conn:
             cur = await conn.cursor()
             print(current_date, start_time)
-            # current_date = 'Пятница'
             await cur.execute(f'SELECT lesson_name, teacher_name, start_time, end_time, classroom, group_name FROM "{class_name}" WHERE day_name = "{current_date}" AND start_time = "{start_time}" AND non_original IS NULL')
-            # cur.execute(f'SELECT lesson_name, teacher_name, start_time, end_time, classroom, group_name FROM "{class_name}" WHERE day_name = "Четверг" AND start_time = "8:15"')
             lessons = await cur.fetchall()
             if not lessons:
                 return
@@ -2498,7 +2494,7 @@ async def prelesson_notification(current_time, subtracted_times, class_name, cur
                 lesson_name, teacher_name, start_time, end_time, classroom, group = lesson
                 if not lesson_name:
                     return None, None
-                completion = f'''_В {start_time}_ - *{lesson_name}* ({teacher_name}) *в {classroom}*{' кабинете' if classroom.isnumeric() else ''}, до _{end_time}_'''
+                completion = f'''_At {start_time}_ - *{lesson_name}* ({teacher_name}) *in {classroom}*{' classroom' if classroom.isnumeric() else ''}, until _{end_time}_'''
                 return [completion, lesson_name]
 
 
@@ -2600,7 +2596,6 @@ async def mailing(now=False, now2=False):
             conn = sqlite3.connect('school_schedule.db')
             cur = conn.cursor()
             cur.execute(f'SELECT start_time, end_time FROM "{class_name}" WHERE day_name = "{current_date}"')
-            # cur.execute(f'SELECT start_time, end_time FROM "{class_name}" WHERE day_name = "Четверг"')
 
             times = cur.fetchall()
             start_times = [start[0] for start in times] if times else []
@@ -2666,7 +2661,7 @@ async def process_whisper(message: Message, state: FSMContext):
     recepient = data['user']
 
     try:
-        await bot.send_message(recepient, 'От Админа:\n'+message.text, reply_markup=Inline.deleteMsg())
+        await bot.send_message(recepient, 'From Admin:\n'+message.text, reply_markup=Inline.deleteMsg())
     except Exception as e: print(e)
     await message.answer(f'Message sent:\n{message.text}', reply_markup=Inline.deleteMsg())
     await message.delete()
@@ -2678,7 +2673,7 @@ async def hide(callback: CallbackQuery):
 
     user = await User.loaduser(callback.from_user.id)
     if not user.hideAlert and user.delprelesson:
-        await callback.answer('Эти уведомления теперь удаляются сами с началом следующего урока, чтобы их не копилась куча!', show_alert=True)
+        await callback.answer("These notifications now delete themselves when the next lesson starts so they don't pile up!", show_alert=True)
         user.hideAlert = 1
         await user.updateuser()
     else:
@@ -2691,7 +2686,7 @@ async def hide(callback: CallbackQuery):
                 
     try:                
         await callback.message.delete()
-    except MessageCantBeDeleted: await callback.answer('Это сообщение слишком старое, поэтому удалите его сами')
+    except MessageCantBeDeleted: await callback.answer('This message is too old, so delete it yourself')
 
 
 
@@ -2700,8 +2695,8 @@ if __name__ == '__main__':
 
     # Start the expired task check loop as a background task
     loop.create_task(check_changes())
-    loop.create_task(check_expired_tasks())
-    loop.create_task(mailing())
+    # loop.create_task(check_expired_tasks())
+    # loop.create_task(mailing())
 
     dp.middleware.setup(AlbumMiddleware())
 
