@@ -14,7 +14,7 @@ A telegram bot that shows homework, schedules, sending notifications and helps y
 
 ## Screenshots
 
-My bot has a user-friendly interface, thanks to the fact that it's on Telegram. You can see some screenshots [right here](https://github.com/laughinme/helpus3/tree/additional/images).
+My bot has a user-friendly interface, thanks to the fact that it's on Telegram. You can see some screenshots [right here](https://github.com/laughinme/helpus3/tree/additional/images-eng).
 
 ## Bot construction
 
