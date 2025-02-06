@@ -1,7 +1,8 @@
 
 # Homework Helper 
 
-A telegram bot that shows homework, schedules, sending notifications and helps you get your schoolwork in order
+A telegram bot that shows homework, schedules, sending notifications and helps you get your schoolwork in order.
+See it works right here @helputils_bot
 
 ## Features
 
